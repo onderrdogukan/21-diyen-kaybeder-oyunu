@@ -6,7 +6,7 @@
     <title>21'i Söyleme Oyunu</title>
     
     <style>
-        /* CSS STİLLERİ: GÜNCELLENMİŞ TASARIM */
+        /* CSS STİLLERİ */
         :root {
             --primary-color: #00aaff; /* Canlı Mavi/Turkuaz */
             --secondary-color: #ffaa00; /* Turuncu */
@@ -33,9 +33,8 @@
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
             text-align: center;
             width: 90%;
-            max-width: 800px; /* Geçmiş için yer açmak adına genişletildi */
+            max-width: 800px; 
             
-            /* DÜZENLEME: Ana içeriği ve geçmişi yan yana getirmek için */
             display: flex;
             flex-wrap: wrap; 
             justify-content: center;
@@ -47,19 +46,18 @@
             border-bottom: 2px solid var(--primary-color);
             padding-bottom: 10px;
             font-weight: 600;
-            width: 100%; /* Tüm genişliği kapla */
+            width: 100%; 
         }
 
         #initial-setup, #game-area {
             margin-top: 25px;
-            width: 100%; /* Başlangıç ekranı tüm genişliği kaplamalı */
+            width: 100%; 
         }
         
-        /* Ana İçerik ve Geçmiş Kutularının Konumlandırılması */
         #main-content {
-            flex: 1; /* Esnek genişlik al */
+            flex: 1; 
             min-width: 300px;
-            padding-right: 20px; /* Geçmiş kutusundan ayır */
+            padding-right: 20px; 
             border-right: 1px solid #eee;
         }
 
@@ -87,6 +85,9 @@
             font-weight: 500;
             transition: all 0.2s ease;
         }
+        button:active {
+            transform: scale(0.98);
+        }
 
         /* Seçim Butonları */
         #starter-selection button, #level-selection button {
@@ -94,7 +95,7 @@
             color: var(--font-dark);
         }
 
-        /* Oyuncu Seçenek Butonları ve Vurgu (Değişmedi) */
+        /* Oyuncu Seçenek Butonları ve Vurgu */
         #player-options {
             transition: all 0.5s ease;
             padding: 15px;
@@ -133,11 +134,11 @@
             color: var(--font-dark);
         }
         
-        /* SAYI GEÇMİŞİ KUTUSU: SAĞ ÜST KÖŞEYE SABİTLEMEYİ SAĞLAYAN YENİ CSS */
+        /* SAYI GEÇMİŞİ KUTUSU */
         #history-box-container {
-            width: 200px; /* Sabit genişlik */
+            width: 200px; 
             margin-left: 20px;
-            order: 2; /* Main content'ten sonra gelsin */
+            order: 2; 
         }
         #history-box {
             background-color: var(--background-light);
@@ -149,8 +150,10 @@
         #history-list {
             list-style: none;
             padding: 0;
-            max-height: 250px; /* Yüksekliği artırıldı */
-            overflow-y: auto;
+            /* GÜNCELLENDİ: Maksimum yükseklik vererek kaydırma çubuğunu etkinleştiriyoruz */
+            max-height: 250px; 
+            /* YENİ: Liste dolduğunda dikey kaydırma çubuğu çıksın */
+            overflow-y: auto; 
             border: 1px solid #e9ecef;
             border-radius: 5px;
             padding: 5px;
@@ -163,6 +166,50 @@
         #history-list li:last-child { border-bottom: none; }
         .player-move { color: var(--success-color); }
         .computer-move { color: var(--primary-color); }
+
+        /* YENİ ANİMASYON STİLLERİ */
+        #game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Yarı saydam siyah arka plan */
+            display: none; /* Başlangıçta gizli */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        #game-over-overlay.active {
+            display: flex;
+        }
+
+        #game-over-message {
+            font-size: 4em;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: scale(0.5);
+            /* Mesaj Animasyonu */
+            animation: zoom-in 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
+        }
+        
+        #game-over-overlay button {
+            background-color: var(--success-color);
+            color: white;
+            font-size: 1.2em;
+            padding: 15px 40px;
+            transition: transform 0.2s;
+        }
+        
+        @keyframes zoom-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -212,6 +259,7 @@
                 <button id="restart-btn" style="display: none;"></button>
             </div>
         </div>
+        
         <div id="history-box-container">
             <div id="history-box">
                 <p style="font-weight: 600; margin-bottom: 5px; color: var(--font-dark);">Sayı Geçmişi:</p>
@@ -219,8 +267,14 @@
                     </ul>
             </div>
         </div>
-        </div>
-
+    </div>
+    
+    <div id="game-over-overlay">
+        <div id="game-over-message"></div>
+        <button id="overlay-restart-btn" 
+                onclick="hideOverlayAndReset()">YENİ OYUN BAŞLAT</button>
+    </div>
+    
     <script>
         // JavaScript Mantığı
         let currentNumber = 0;
@@ -236,9 +290,12 @@
         const levelSelection = document.getElementById('level-selection');
         const starterSelection = document.getElementById('starter-selection');
         const playerOptions = document.getElementById('player-options');
-        const restartBtn = document.getElementById('restart-btn');
         const initialMessage = document.getElementById('initial-message');
         const historyList = document.getElementById('history-list');
+        // Yeni elementler
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const gameOverMessage = document.getElementById('game-over-message');
+
 
         // --- Sayı Geçmişini Güncelleme Fonksiyonu ---
         function updateHistory(starter, count, newNumber) {
@@ -249,27 +306,26 @@
             const listItem = document.createElement('li');
             listItem.className = className;
             
-            // Söylenen sayıları aralık yerine bir dizi halinde oluştur
             const spokenNumbers = [];
             for (let i = start; i <= end; i++) {
                 spokenNumbers.push(i);
             }
-            const numbersList = spokenNumbers.join(', '); // Örn: "1, 2, 3"
+            const numbersList = spokenNumbers.join(', ');
 
             let text;
             
             if (starter === 'player') {
-                // Oyuncu için: "dedin" fiili kullanılıyor.
                 text = `Sen ${numbersList} dedin. (Yeni Sayı: ${newNumber})`;
             } else {
-                 // Bilgisayar için: "dedi" fiili kullanılıyor.
                 text = `Bilgisayar ${numbersList} dedi. (Yeni Sayı: ${newNumber})`;
             }
             
             listItem.textContent = text;
             historyList.appendChild(listItem);
-            historyList.scrollTop = historyList.scrollHeight; 
+            historyList.scrollTop = historyList.scrollHeight;
+
         }
+
         // --- Oyun Başlangıcı ve Sıfırlama ---
         function setStarterAndDisplayLevel(starter) {
             selectedStarter = starter;
@@ -300,19 +356,22 @@
             currentNumber = 0;
             gameActive = true;
             currentNumberEl.textContent = currentNumber;
-            restartBtn.style.display = 'none';
             historyList.innerHTML = '';
+            // Overlay'i kapat
+            gameOverOverlay.classList.remove('active');
+            // Oyun alanını temizle
+            gameArea.classList.remove('player-turn'); 
+        }
+
+        // YENİ: Overlay'i gizle ve oyun sıfırlama ekranına dön
+        function hideOverlayAndReset() {
+            resetGame();
+            gameArea.style.display = 'none';
+            initialSetup.style.display = 'block';
             
-            restartBtn.textContent = 'Yeni Oyun Başlat (Seviye Seçimine Dön)';
-            restartBtn.onclick = () => {
-                gameArea.style.display = 'none';
-                gameArea.classList.remove('player-turn');
-                initialSetup.style.display = 'block';
-                
-                initialMessage.textContent = "Kim Başlasın?";
-                starterSelection.style.display = 'block';
-                levelSelection.style.display = 'none';
-            };
+            initialMessage.textContent = "Kim Başlasın?";
+            starterSelection.style.display = 'block';
+            levelSelection.style.display = 'none';
         }
 
         // --- Oyuncu Hamlesi ---
@@ -332,8 +391,7 @@
                 currentNumber = newNumber;
                 currentNumberEl.textContent = currentNumber;
                 updateHistory('player', count, newNumber);
-                messageEl.textContent = `Sen ${currentNumber} dedin ve KAYBETTİN! 😭`;
-                endGame(false);
+                endGame(false); // Kaybetti
                 return;
             }
 
@@ -392,8 +450,7 @@
                 currentNumber = newNumber;
                 currentNumberEl.textContent = currentNumber;
                 updateHistory('computer', count, newNumber);
-                messageEl.textContent = `Bilgisayar ${currentNumber} dedi ve KAYBETTİ! SEN KAZANDIN! 🏆`;
-                endGame(true);
+                endGame(true); // Kazandı
             } else {
                 currentNumber = newNumber;
                 currentNumberEl.textContent = currentNumber;
@@ -405,12 +462,22 @@
             }
         }
 
-        // --- Oyun Sonu ---
+        // YENİ: Oyun Sonu Fonksiyonu (Overlay'i gösterir)
         function endGame(playerWon) {
             gameActive = false;
             playerOptions.style.display = 'none';
-            restartBtn.style.display = 'block';
             gameArea.classList.remove('player-turn');
+
+            if (playerWon) {
+                gameOverMessage.textContent = "SEN KAZANDIN! 🏆";
+                gameOverMessage.style.color = "var(--success-color)";
+            } else {
+                gameOverMessage.textContent = "KAYBETTİN! 😭";
+                gameOverMessage.style.color = "var(--danger-color)";
+            }
+            
+            // Tam ekran katmanını aktif et
+            gameOverOverlay.classList.add('active');
         }
 
         // --- İlk Çalıştırmada Başlangıç Seçimi Ekranını Göster ---
