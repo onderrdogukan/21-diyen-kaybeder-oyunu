@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21 Kaybeden Sayı Oyunu</title>
+    
+    <style>
+        /* CSS Stilleri */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e9ecef;
+            margin: 0;
+        }
+
+        #game-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #343a40;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 1.3em;
+            color: #495057;
+        }
+
+        #initial-setup, #game-area {
+            margin-top: 20px;
+        }
+        
+        /* Nasıl Oynanır Stili */
+        #how-to-play {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            text-align: left;
+            line-height: 1.4;
+        }
+        #how-to-play strong {
+            color: #dc3545; /* Kaybeden sayı rengi */
+        }
+
+
+        button {
+            padding: 12px 20px;
+            margin: 8px 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        /* Başlangıç ve Seviye Seçim Butonları */
+        #starter-selection button, #level-selection button {
+            background-color: #ffc107;
+            color: #343a40;
+            font-weight: bold;
+        }
+        #starter-selection button:hover, #level-selection button:hover {
+            background-color: #e0a800;
+        }
+
+        /* Oyuncu Seçenek Butonları */
+        #player-options button {
+            background-color: #007bff;
+            color: white;
+            margin: 5px;
+        }
+        #player-options button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        /* Yeniden Başlat Butonu */
+        #restart-btn {
+            background-color: #dc3545;
+            color: white;
+            margin-top: 20px;
+        }
+        #restart-btn:hover {
+            background-color: #c82333;
+        }
+
+        #current-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #28a745;
+            display: block;
+            margin: 10px 0 20px 0;
+        }
+
+        #message {
+            font-size: 1.1em;
+            margin: 20px 0;
+            min-height: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>21 Kaybeden Sayı Oyunu</h1>
+
+        <div id="how-to-play">
+            <p style="text-align: center; margin-top: 0;">
+                **NASIL OYNANIR**
+            </p>
+            <ul>
+                <li>Oyun 1'den başlar ve sıra ile sayılır.</li>
+                <li>Her sıran geldiğinde en az 1, en fazla 3 sayı söyleyebilirsin.</li>
+                <li>Söylediğin son sayı, bir sonraki oyuncunun başlangıç sayısı olur.</li>
+                <li>Oyundaki amaç, rakibini 21 sayısını söylemeye zorlamaktır.</li>
+                <li>21 sayısını söyleyen oyuncu oyunu KAYBEDER!</li>
+            </ul>
+        </div>
+        <div id="initial-setup">
+            <h2 id="initial-message">Kim Başlasın?</h2>
+            
+            <div id="starter-selection">
+                <button onclick="setStarterAndDisplayLevel('player')">Ben Başlayayım</button>
+                <button onclick="setStarterAndDisplayLevel('computer')">Bilgisayar Başlasın</button>
+            </div>
+
+            <div id="level-selection" style="display: none;">
+                <h2>Zorluk Seviyesini Seçin:</h2>
+                <button onclick="startGame('easy')">Kolay</button>
+                <button onclick="startGame('medium')">Orta</button>
+                <button onclick="startGame('hard')">Zor</button>
+            </div>
+        </div>
+
+        <div id="game-area" style="display: none;">
+            <p>Mevcut Sayı:</p>
+            <span id="current-number">0</span>
+
+            <p id="message"></p>
+
+            <div id="player-options">
+                <p>Kaç sayı söylemek istersin?</p>
+                <button onclick="makeMove(1)">1 Sayı</button>
+                <button onclick="makeMove(2)">2 Sayı</button>
+                <button onclick="makeMove(3)">3 Sayı</button>
+            </div>
+
+            <button id="restart-btn" style="display: none;"></button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript Mantığı (Öncekiyle aynıdır, sadece element ID'leri güncellenmiştir)
+        let currentNumber = 0;
+        let maxNumber = 21; 
+        let gameActive = false;
+        let difficulty = 'medium'; 
+        let selectedStarter = 'player'; 
+
+        const currentNumberEl = document.getElementById('current-number');
+        const messageEl = document.getElementById('message');
+        const gameArea = document.getElementById('game-area');
+        const initialSetup = document.getElementById('initial-setup');
+        const levelSelection = document.getElementById('level-selection');
+        const starterSelection = document.getElementById('starter-selection');
+        const playerOptions = document.getElementById('player-options');
+        const restartBtn = document.getElementById('restart-btn');
+        const initialMessage = document.getElementById('initial-message');
+
+        // --- Adım 1: Başlangıç Seçimini Ayarla ve Seviye Seçimine Geç ---
+        function setStarterAndDisplayLevel(starter) {
+            selectedStarter = starter;
+            initialMessage.textContent = "Seviye Seçin:";
+            starterSelection.style.display = 'none';
+            levelSelection.style.display = 'block';
+        }
+
+        // --- Adım 2: Oyunu Başlat ve Sıfırla ---
+        function startGame(level) {
+            difficulty = level;
+            resetGame();
+            initialSetup.style.display = 'none';
+            gameArea.style.display = 'block';
+            
+            if (selectedStarter === 'computer') {
+                messageEl.textContent = "Bilgisayar Başlıyor...";
+                playerOptions.style.display = 'none';
+                setTimeout(computerMove, 1000); 
+            } else {
+                messageEl.textContent = "Oyun Başladı. Sıra Sende!";
+                playerOptions.style.display = 'block';
+            }
+        }
+
+        function resetGame() {
+            currentNumber = 0;
+            gameActive = true;
+            currentNumberEl.textContent = currentNumber;
+            restartBtn.style.display = 'none';
+            
+            restartBtn.textContent = 'Yeni Oyun Başlat (Seviye Seçimine Dön)';
+            restartBtn.onclick = () => {
+                gameArea.style.display = 'none';
+                initialSetup.style.display = 'block';
+                
+                initialMessage.textContent = "Kim Başlasın?";
+                starterSelection.style.display = 'block';
+                levelSelection.style.display = 'none';
+            };
+        }
+
+        // --- Oyuncu Hamlesi ---
+        function makeMove(count) {
+            if (!gameActive) return;
+
+            let newNumber = currentNumber + count;
+            
+            if (newNumber > maxNumber) {
+                messageEl.textContent = `Hatalı hamle. ${currentNumber}'dan sonra en fazla ${maxNumber - currentNumber} diyebilirsin.`;
+                return;
+            }
+
+            if (newNumber === maxNumber) {
+                currentNumber = newNumber;
+                currentNumberEl.textContent = currentNumber;
+                messageEl.textContent = `Sen ${currentNumber} dedin ve KAYBETTİN! 😞`;
+                endGame(false);
+                return;
+            }
+
+            currentNumber = newNumber;
+            currentNumberEl.textContent = currentNumber;
+            messageEl.textContent = `Sen ${currentNumber} sayısına ulaştın. Sıra Bilgisayarda...`;
+            
+            playerOptions.style.display = 'none';
+            setTimeout(computerMove, 1000); 
+        }
+
+
+        // --- Bilgisayar Hamlesi ---
+        function computerMove() {
+            if (!gameActive) return;
+
+            let count = 0;
+            const winningNumbers = [4, 8, 12, 16, 20];
+            let nextWinningNumber = winningNumbers.find(n => n > currentNumber);
+
+            switch (difficulty) {
+                case 'hard':
+                    if (nextWinningNumber) {
+                        count = nextWinningNumber - currentNumber;
+                    } else {
+                        count = (maxNumber - 1) - currentNumber; 
+                        count = Math.min(3, Math.max(1, count));
+                    }
+                    break;
+                    
+                case 'medium':
+                    if (Math.random() < 0.75 && nextWinningNumber) {
+                        count = nextWinningNumber - currentNumber;
+                    }
+                    break;
+                    
+                case 'easy':
+                    if (Math.random() < 0.50 && nextWinningNumber) {
+                        count = nextWinningNumber - currentNumber;
+                    }
+                    break;
+            }
+
+            let maxAllowed = Math.min(3, (maxNumber - 1) - currentNumber);
+            
+            if (count < 1 || count > 3 || count > maxAllowed) {
+                if (maxAllowed >= 1) {
+                    count = Math.floor(Math.random() * maxAllowed) + 1;
+                } else {
+                    count = 1; 
+                }
+            }
+            
+            let newNumber = currentNumber + count;
+
+            if (newNumber === maxNumber) {
+                currentNumber = maxNumber;
+                currentNumberEl.textContent = currentNumber;
+                messageEl.textContent = `Bilgisayar ${currentNumber} dedi ve KAYBETTİ! SEN KAZANDIN! 🎉`;
+                endGame(true);
+            } else {
+                currentNumber = newNumber;
+                currentNumberEl.textContent = currentNumber;
+                messageEl.textContent = `Bilgisayar ${currentNumber} sayısına ulaştı. Sıra Sende.`;
+                playerOptions.style.display = 'block';
+            }
+        }
+
+        // --- Oyun Sonu ---
+        function endGame(playerWon) {
+            gameActive = false;
+            playerOptions.style.display = 'none';
+            restartBtn.style.display = 'block';
+        }
+
+        // --- İlk Çalıştırmada Başlangıç Seçimi Ekranını Göster ---
+        document.addEventListener('DOMContentLoaded', () => {
+            gameArea.style.display = 'none';
+            initialSetup.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
