@@ -20,7 +20,7 @@ bir yapay zeka modeline entegre etmektir.
 * **Tasarım:** CSS Keyframes, CSS Variables, Responsive Layout
 
 ## Canlı Demoyu İncele
-**[Projeyi Tarayıcıda Çalıştırmak İçin Tıklayın](https://onderrdogukan.github.io/21-diyen-kaybeder-oyunu/))**
+**[Projeyi Tarayıcıda Çalıştırmak İçin Tıklayın](https://onderrdogukan.github.io/21-diyen-kaybeder-oyunu/)**
 
 ---
 Geliştirici: Doğukan Önder - 2026
